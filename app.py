@@ -74,6 +74,53 @@ def CalculateMetrics(model, X: pd.DataFrame, y: pd.Series) -> tuple[dict[str, fl
     }
     return metrics, predictions, probability_frame
 
+
+def LoadModelComparison(X: pd.DataFrame, y: pd.Series) -> pd.DataFrame:
+    """Evaluate all five saved classifiers on the same test dataset."""
+
+    comparison_results = []
+
+    for model_name, model_file in MODEL_FILES.items():
+
+        # Load the already-trained model
+        model = LoadModel(model_file)
+
+        # Calculate all six evaluation metrics
+        metrics, _, _ = CalculateMetrics(model, X, y)
+
+        comparison_results.append({
+            "Model": model_name,
+            **metrics
+        })
+
+    # Create comparison DataFrame
+    comparison_df = pd.DataFrame(comparison_results)
+
+    # Rank models across all six evaluation metrics
+    metric_columns = [
+        "Accuracy",
+        "AUC (OvR macro)",
+        "Precision (macro)",
+        "Recall (macro)",
+        "F1 (macro)",
+        "MCC"
+    ]
+
+    comparison_df["Average Rank"] = (
+        comparison_df[metric_columns]
+        .rank(ascending=False, method="average")
+        .mean(axis=1)
+    )
+
+    # Best average rank comes first
+    comparison_df = comparison_df.sort_values(
+        by=["Average Rank", "Accuracy"],
+        ascending=[True, False]
+    ).reset_index(drop=True)
+
+    return comparison_df
+
+
 def ApplyClinicalStyling() -> None:
     st.markdown(
         """
@@ -239,47 +286,183 @@ def Main() -> None:
     for column, (name, value) in zip(metric_columns, metrics.items()):
         column.metric(name, f"{value:.4f}")
 
-    left, right = st.columns([1.25, 1])
+    
     class_labels = metadata["class_labels"]
-    with left:
-        st.subheader("Confusion matrix")
-        matrix = confusion_matrix(y_test, predictions, labels=class_labels)
-        figure, axis = plt.subplots(figsize=(12, 9))
-        sns.heatmap(
-            matrix,
-            cmap="Blues",
-            cbar=True,
-            xticklabels=class_labels,
-            yticklabels=class_labels,
-            ax=axis,
-            square=True,
-        )
-        axis.set_xlabel("Predicted letter")
-        axis.set_ylabel("Actual letter")
-        st.pyplot(figure, clear_figure=True)
-    with right:
-        st.subheader("Classification report")
-        report = classification_report(
-            y_test,
-            predictions,
-            labels=class_labels,
-            target_names=class_labels,
-            output_dict=True,
-            zero_division=0,
-        )
-        st.dataframe(pd.DataFrame(report).transpose().round(4), use_container_width=True, height=700)
 
-    st.subheader("Evaluation data preview")
-    preview = data.copy()
-    preview["predicted_letter"] = predictions
-    preview["prediction_confidence"] = probabilities.max(axis=1).round(4)
-    st.dataframe(preview.head(30), use_container_width=True)
+    # Confusion matrix - full width
+    st.subheader("Confusion Matrix")
+
+    matrix = confusion_matrix(
+        y_test,
+        predictions,
+        labels=class_labels
+    )
+
+    figure, axis = plt.subplots(figsize=(12, 9))
+
+    sns.heatmap(
+        matrix,
+        cmap="Blues",
+        cbar=True,
+        xticklabels=class_labels,
+        yticklabels=class_labels,
+        ax=axis,
+        square=True,
+    )
+
+    axis.set_xlabel("Predicted letter")
+    axis.set_ylabel("Actual letter")
+
+    st.pyplot(figure, clear_figure=True)
+
+    # Classification report - full width
+    st.subheader("Classification Report")
+
+    report = classification_report(
+        y_test,
+        predictions,
+        labels=class_labels,
+        target_names=class_labels,
+        output_dict=True,
+        zero_division=0,
+    )
+
+    # Convert row index into an explicit Class column
+    report_df = (
+        pd.DataFrame(report)
+        .transpose()
+        .rename_axis("Class")
+        .reset_index()
+    )
+
+    st.dataframe(
+        report_df.round(4),
+        use_container_width=True,
+        height=1100,
+        hide_index=True
+    )
+
+
+    
+    # Prepare predictions for the complete test dataset
+    full_results = data.copy()
+
+    full_results["predicted_letter"] = predictions
+    full_results["prediction_confidence"] = (
+        probabilities.max(axis=1).round(4)
+    )
+
+    # Display only the first 30 records
+    st.subheader("Test Data Prediction Preview (First 30 Records)")
+
+    st.caption(
+        f"Showing 30 of {len(full_results):,} test records. "
+        "Download the CSV to view all predictions."
+    )
+
+    st.dataframe(
+        full_results.head(30),
+        use_container_width=True
+    )
+
+    # Download all test records and predictions
     st.download_button(
-        "Download predictions as CSV",
-        preview.to_csv(index=False).encode("utf-8"),
+        f"Download all {len(full_results):,} predictions as CSV",
+        full_results.to_csv(index=False).encode("utf-8"),
         file_name=f"{selected_model_name.lower().replace(' ', '_')}_predictions.csv",
         mime="text/csv",
     )
+    
+    # --------------------------------------------------
+    # Comparison of all five classification models
+    # --------------------------------------------------
+
+    st.divider()
+
+    st.subheader("Performance Comparison - All Five Models")
+
+    st.write(
+        "The following table compares all five trained models "
+        "using the same held-out test dataset."
+    )
+
+    # Evaluate all five models
+    comparison_df = LoadModelComparison(X_test, y_test)
+
+    metric_columns = [
+        "Accuracy",
+        "AUC (OvR macro)",
+        "Precision (macro)",
+        "Recall (macro)",
+        "F1 (macro)",
+        "MCC"
+    ]
+
+    # Format and highlight the best metric values
+    styled_comparison = (
+        comparison_df.style
+        .format({
+            "Accuracy": "{:.4f}",
+            "AUC (OvR macro)": "{:.4f}",
+            "Precision (macro)": "{:.4f}",
+            "Recall (macro)": "{:.4f}",
+            "F1 (macro)": "{:.4f}",
+            "MCC": "{:.4f}",
+            "Average Rank": "{:.2f}"
+        })
+        .highlight_max(
+            subset=pd.Index(metric_columns),
+            color="#D5F5E3"
+        )
+        .highlight_min(
+            subset=pd.Index(["Average Rank"]),
+            color="#D5F5E3"
+        )
+    )
+
+    st.dataframe(
+        styled_comparison,
+        use_container_width=True,
+        hide_index=True
+    )
+
+    # Display overall winner
+    winner = comparison_df.iloc[0]
+
+    st.subheader("Overall Best-Performing Model")
+
+    if winner["Model"] == "Support Vector Machine":
+        st.success(
+            "Support Vector Machine (SVM) is the best-performing "
+            "model on this held-out dataset. It achieves the best "
+            "overall ranking across all six evaluation metrics."
+        )
+    else:
+        st.warning(
+            f"{winner['Model']} has the best overall average rank "
+            "on the current test dataset. SVM should not be declared "
+            "the winner unless the evaluation results support it."
+        )
+
+    
+    # Display winner details without truncating the model name
+    st.markdown(
+        f"Best Performing Model: **{winner['Model']}**"
+    )
+
+    col1, col2 = st.columns(2)
+
+    col1.metric(
+        "Accuracy",
+        f"{winner['Accuracy']:.4f}"
+    )
+
+    col2.metric(
+        "Average Rank",
+        f"{winner['Average Rank']:.2f}"
+    )
+
+
 
 
 if __name__ == "__main__":

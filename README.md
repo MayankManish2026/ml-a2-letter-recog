@@ -112,10 +112,13 @@ ml-a2-letter-recog/
 ├── README.md
 ├── requirements.txt
 ├── letter_recognition_raw.csv
+├── app.py
 ├── train_models.py
 ├── verify_project.py
 ├── metrics.csv
 ├── test_data.csv
+├── streamlit/
+│   ├── config.toml # Light clinical visual theme
 │
 └── models/
     ├── decision_tree.joblib
@@ -162,6 +165,15 @@ This project has been tested locally with Python 3.14.
 
 Final training and validation will also be performed in the BITS Virtual Lab environment using Python 3.12.
 
-## Next Milestone
+## Streamlit application
 
-The next milestone will add a Streamlit web application that loads the saved models, accepts labelled test data, and displays model evaluation results without retraining.
+The Streamlit application evaluates already saved classifiers. It does not train or refit a model when a CSV is uploaded.
+
+Features:
+
+- Select any of the five saved classifiers.
+- Evaluate the included 4,000-row held-out test dataset.
+- Upload a labelled CSV containing the `letter` column and all 16 feature columns.
+- Display Accuracy, AUC, Precision, Recall, F1 Score, and MCC.
+- Display a confusion matrix and classification report.
+- Load saved `.joblib` model artifacts from the `models/` folder.

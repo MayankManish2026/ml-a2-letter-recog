@@ -1,0 +1,12 @@
+.venv/
+tmp/
+__pycache__/
+*.py[cod]
+.streamlit/secrets.toml
+
+# Local editor and agent configuration not used by this assignment
+.vscode/
+.github/
+
+# Local-only PDF draft output
+reports/

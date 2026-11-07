@@ -2,11 +2,11 @@
 
 ## Objective
 
-This project implements a multiclass classification workflow using the UCI Letter Recognition dataset.
+This project compares five machine learning classifiers on the UCI Letter Recognition dataset.
 
-The objective is to predict the correct capital letter, from `A` to `Z`, using 16 numeric features extracted from black-and-white letter images.
+The objective is to predict the correct capital letter, from `A` to `Z`, using 16 numeric shape features extracted from black-and-white character images.
 
-The project will compare the following five machine-learning classifiers on the same dataset:
+The implemented classifiers are:
 
 1. Logistic Regression
 2. Decision Tree Classifier
@@ -18,55 +18,113 @@ The project will compare the following five machine-learning classifiers on the 
 
 This project uses the UCI Letter Recognition dataset.
 
-- Number of instances: 20,000
+- Total instances: 20,000
 - Input features: 16 numeric features
 - Target classes: 26 capital letters (`A` to `Z`)
 - Target column: `letter`
 - Missing values: None
 
-Each row represents one character image. The original image is converted into numerical shape features, including bounding-box position, width, height, active-pixel characteristics, statistical moments, and edge-count information.
+Each row represents one letter image. The original image is converted into numeric shape features, including bounding-box position, width, height, active-pixel characteristics, statistical moments, and edge-count information.
 
-The raw dataset used by the training script is:
+The source data used by this project is:
 
 ```text
 letter_recognition_raw.csv
 ```
 
-## First Milestone Scope
+## Data Preparation
 
-This initial version contains the model-training foundation:
+The dataset is divided into:
 
-- Dataset source file
-- Python dependency list
-- Training pipeline for the five required classifiers
-- Reproducibility verification script
-- Git ignore rules
+```text
+80% training data
+20% held-out test data
+```
 
-Saved models, held-out test data, metrics, and the Streamlit web interface will be added in later commits.
+A stratified split is used so that all 26 letters remain proportionally represented in both training and test sets.
+
+The random state is fixed at `42` to make the experiment reproducible.
+
+## Model Preprocessing
+
+Logistic Regression, K-Nearest Neighbors, and Support Vector Machine use `StandardScaler` inside a scikit-learn pipeline.
+
+This ensures that scaling is fitted only on training data and that the same preprocessing is applied when making predictions on test data.
+
+Decision Tree and Gaussian Naive Bayes are trained directly on the numeric features.
+
+## Evaluation Metrics
+
+Each model is evaluated using:
+
+- Accuracy
+- AUC Score - One-vs-Rest macro average
+- Precision - Macro average
+- Recall - Macro average
+- F1 Score - Macro average
+- Matthews Correlation Coefficient (MCC)
+
+Macro averaging gives equal importance to every letter class rather than allowing more common letters to dominate the score.
+
+## Model Comparison Results
+
+| ML Model Name | Accuracy | AUC | Precision | Recall | F1 | MCC |
+|---|---:|---:|---:|---:|---:|---:|
+| Logistic Regression | 0.7742 | 0.9805 | 0.7748 | 0.7730 | 0.7728 | 0.7653 |
+| Decision Tree | 0.8562 | 0.9544 | 0.8592 | 0.8561 | 0.8563 | 0.8506 |
+| K-Nearest Neighbors | 0.9500 | 0.9965 | 0.9506 | 0.9498 | 0.9499 | 0.9480 |
+| Gaussian Naive Bayes | 0.6522 | 0.9573 | 0.6641 | 0.6512 | 0.6479 | 0.6391 |
+| Support Vector Machine | 0.9748 | 0.9995 | 0.9748 | 0.9746 | 0.9746 | 0.9737 |
+
+## Observations
+
+- Logistic Regression provides a useful linear baseline but cannot fully capture the nonlinear differences between visually similar letters.
+- Decision Tree improves performance by learning nonlinear decision rules, although its threshold-based splits are less flexible than distance-based or kernel-based approaches.
+- K-Nearest Neighbors performs strongly because similar letter shapes tend to occupy nearby regions in the scaled feature space.
+- Gaussian Naive Bayes performs weakest because its assumption that all input features are conditionally independent is not realistic for correlated image-shape features.
+- Support Vector Machine is the best-performing model across all reported metrics. The RBF kernel effectively separates complex and nonlinear letter-shape patterns.
+
+## Saved Training Outputs
+
+After running `train_models.py`, the project creates:
+
+```text
+models/
+    decision_tree.joblib
+    gaussian_naive_bayes.joblib
+    k_nearest_neighbors.joblib
+    logistic_regression.joblib
+    support_vector_machine.joblib
+    metadata.json
+
+metrics.csv
+test_data.csv
+```
+
+The `.joblib` files contain the trained classifiers. For Logistic Regression, KNN, and SVM, the saved files also contain the fitted feature scaler.
 
 ## Project Structure
 
 ```text
-ML_Assignment_2/
+ml-a2-letter-recog/
 │
 ├── .gitignore
 ├── README.md
 ├── requirements.txt
 ├── letter_recognition_raw.csv
 ├── train_models.py
-└── verify_project.py
+├── verify_project.py
+├── metrics.csv
+├── test_data.csv
+│
+└── models/
+    ├── decision_tree.joblib
+    ├── gaussian_naive_bayes.joblib
+    ├── k_nearest_neighbors.joblib
+    ├── logistic_regression.joblib
+    ├── support_vector_machine.joblib
+    └── metadata.json
 ```
-
-## Training Workflow
-
-The `train_models.py` script performs the following steps:
-
-1. Loads the Letter Recognition dataset.
-2. Separates input features from target labels.
-3. Creates a stratified train-test split.
-4. Trains all five classifiers using the same training data.
-5. Calculates Accuracy, AUC, Precision, Recall, F1 Score, and MCC Score.
-6. Saves trained-model artifacts and evaluation outputs.
 
 ## Local Setup
 
@@ -82,7 +140,7 @@ Install dependencies:
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 ```
 
-Run model training:
+Train the five classifiers:
 
 ```powershell
 .\.venv\Scripts\python.exe train_models.py
@@ -90,16 +148,20 @@ Run model training:
 
 ## Reproducibility Verification
 
-After the model-training script creates saved models and evaluation files, run:
+Run:
 
 ```powershell
 .\.venv\Scripts\python.exe verify_project.py
 ```
 
-This script loads the saved trained models and confirms that their predictions on the held-out test data reproduce the values stored in the evaluation results. It does not retrain any model.
+This script loads each saved trained model and confirms that its predictions on `test_data.csv` reproduce the values in `metrics.csv`. It does not retrain any model.
 
 ## Python Version
 
 This project has been tested locally with Python 3.14.
 
-The final training and validation run will also be performed in the BITS Virtual Lab environment using Python 3.12.
+Final training and validation will also be performed in the BITS Virtual Lab environment using Python 3.12.
+
+## Next Milestone
+
+The next milestone will add a Streamlit web application that loads the saved models, accepts labelled test data, and displays model evaluation results without retraining.

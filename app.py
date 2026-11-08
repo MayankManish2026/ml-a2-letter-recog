@@ -223,7 +223,8 @@ def Main() -> None:
             <span>Letter Recognition Evaluator</span>
         </div>
         <div class="clinical-meta">
-            MACHINE LEARNING ASSIGNMENT 2
+            <div>MACHINE LEARNING ASSIGNMENT 2</div>
+            <div>Developed by - Mayank Manish</div>
         </div>
     </div>
 

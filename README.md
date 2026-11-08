@@ -2,45 +2,54 @@
 
 ## 1. Problem Statement
 
-The objective of this project is to implement, evaluate, and compare five supervised machine learning classification algorithms using the UCI Letter Recognition dataset.
+The objective of this project is to develop and compare five machine learning classification models to recognize English capital letters (A–Z) using numerical features extracted from black-and-white character images.
 
-The classification task is to predict the correct English capital letter (A–Z) from 16 numerical shape features extracted from black-and-white character images.
+The project uses the UCI Letter Recognition dataset and implements five classification algorithms on the same dataset. Their performance is evaluated using six standard classification metrics.
 
-The five implemented classification algorithms are:
-
-1. Logistic Regression
-2. Decision Tree Classifier
-3. K-Nearest Neighbors (KNN) Classifier
-4. Gaussian Naive Bayes Classifier
-5. Support Vector Machine (SVM)
-
-All five models are trained and evaluated using the same dataset and held-out test data to ensure a consistent comparison.
-
-An interactive Streamlit web application is developed to evaluate saved classifiers, visualize their predictions, compare model performance, and identify the best-performing model.
+An interactive Streamlit web application is developed to demonstrate the trained models, compare their performance, evaluate test data, and display prediction results without retraining the saved models.
 
 ## 2. Dataset Description
 
 **Dataset:** UCI Letter Recognition Dataset
 
-**Source:** [UCI Machine Learning Repository](https://archive.ics.uci.edu/dataset/59/letter+recognition)
+**Source:** https://archive.ics.uci.edu/dataset/59/letter+recognition
 
-| Property | Description |
+The dataset contains numerical attributes describing the shape and characteristics of capital letters.
+
+| Dataset Attribute | Description |
 |---|---|
 | Total instances | 20,000 |
 | Input features | 16 numerical features |
-| Target classes | 26 English capital letters (A–Z) |
+| Target classes | 26 capital letters (A–Z) |
 | Target column | `letter` |
 | Missing values | None |
-| Training instances | 16,000 (80%) |
-| Test instances | 4,000 (20%) |
+| Problem type | Multiclass classification |
 
-Each dataset record represents one capital letter. The original character image is converted into numerical shape features describing bounding-box position, width, height, active-pixel characteristics, statistical moments, and edge-count information.
+Each record represents a letter image described through 16 numerical features, including bounding-box position, width, height, pixel characteristics, statistical moments, and edge-count information.
 
-The source dataset is stored in:
+The original dataset is included in the repository as:
 
 `letter_recognition_raw.csv`
 
-The dataset satisfies the assignment requirements of at least 12 input features and 500 instances.
+### Data Preparation
+
+The dataset was divided into training and held-out test datasets using an 80:20 stratified split.
+
+- Training records: 16,000
+- Test records: 4,000
+- Random state: 42
+
+Stratification ensures that all 26 letter classes are proportionally represented in both datasets.
+
+The same held-out test dataset is used to evaluate all five classifiers, ensuring a consistent comparison.
+
+### Model Preprocessing
+
+Feature scaling is applied to Logistic Regression, K-Nearest Neighbors, and Support Vector Machine using `StandardScaler` within scikit-learn pipelines.
+
+The scaler is fitted on the training data and retained with the trained model so that the same preprocessing is applied during prediction.
+
+Decision Tree and Gaussian Naive Bayes are trained directly on the numerical features without feature scaling.
 
 ## 3. GitHub Repository Link
 
@@ -48,55 +57,45 @@ The dataset satisfies the assignment requirements of at least 12 input features 
 
 https://github.com/MayankManish2026/ml-a2-letter-recog
 
-The repository contains the complete Python source code, dependency requirements, saved trained models, test dataset, evaluation results, and project documentation.
+The public repository contains:
+
+- Complete Python source code.
+- Streamlit application (`app.py`).
+- Model training script (`train_models.py`).
+- Reproducibility verification script (`verify_project.py`).
+- Requirements file (`requirements.txt`).
+- Original dataset (`letter_recognition_raw.csv`).
+- Held-out test dataset (`test_data.csv`).
+- Evaluation results (`metrics.csv`).
+- Five saved trained model files in the `models/` directory.
+- Project documentation (`README.md`).
 
 ## 4. Models Used and Performance Evaluation
 
-### 4.1 Data Preparation
+The following five classification algorithms were implemented using the UCI Letter Recognition dataset:
 
-The complete dataset contains 20,000 records.
+1. Logistic Regression
+2. Decision Tree Classifier
+3. K-Nearest Neighbors Classifier
+4. Gaussian Naive Bayes Classifier
+5. Support Vector Machine
 
-The dataset is divided into:
+### Evaluation Metrics
 
-- **Training data:** 16,000 records (80%)
-- **Held-out test data:** 4,000 records (20%)
+All five models were evaluated using the same held-out test dataset and the following six metrics:
 
-A stratified train-test split is used to maintain proportional representation of all 26 letter classes in both training and test sets.
+- **Accuracy:** Measures the proportion of correctly classified instances.
+- **AUC Score:** Measures the model's ability to distinguish between classes. The multiclass AUC is calculated using the One-vs-Rest strategy with macro averaging.
+- **Precision:** Measures the proportion of correct positive predictions among all positive predictions. Macro averaging is used.
+- **Recall:** Measures the proportion of actual positive instances correctly identified. Macro averaging is used.
+- **F1 Score:** Harmonic mean of precision and recall, calculated using macro averaging.
+- **Matthews Correlation Coefficient (MCC):** Measures the correlation between actual and predicted classifications.
 
-The random state is fixed at `42` to make the experiment reproducible.
+Macro averaging gives equal importance to all 26 letter classes.
 
-### 4.2 Model Preprocessing
+### Model Comparison Results
 
-The following models use `StandardScaler` inside a scikit-learn pipeline:
-
-- Logistic Regression
-- K-Nearest Neighbors
-- Support Vector Machine
-
-Feature scaling is fitted only on the training dataset. The fitted preprocessing pipeline is subsequently applied to test data, preventing data leakage.
-
-Decision Tree and Gaussian Naive Bayes are trained directly on the numerical input features without feature scaling.
-
-The trained classifiers and their required preprocessing steps are saved as Joblib artifacts for subsequent evaluation and deployment.
-
-### 4.3 Evaluation Metrics
-
-All five models are evaluated using the following six metrics:
-
-| Evaluation Metric | Description |
-|---|---|
-| Accuracy | Proportion of correctly classified instances |
-| AUC Score | Area Under the ROC Curve using One-vs-Rest macro averaging |
-| Precision | Macro-averaged precision across all 26 classes |
-| Recall | Macro-averaged recall across all 26 classes |
-| F1 Score | Macro-averaged harmonic mean of precision and recall |
-| MCC Score | Matthews Correlation Coefficient |
-
-Macro averaging gives equal importance to each letter class.
-
-### 4.4 Model Comparison Table
-
-The following table presents the evaluation results obtained from the same 4,000-record held-out test dataset.
+The following table presents the evaluation results obtained from the five trained classifiers.
 
 | ML Model Name | Accuracy | AUC | Precision | Recall | F1 | MCC |
 |---|---:|---:|---:|---:|---:|---:|
@@ -104,45 +103,42 @@ The following table presents the evaluation results obtained from the same 4,000
 | Decision Tree | 0.8562 | 0.9544 | 0.8592 | 0.8561 | 0.8563 | 0.8506 |
 | K-Nearest Neighbors | 0.9500 | 0.9965 | 0.9506 | 0.9498 | 0.9499 | 0.9480 |
 | Gaussian Naive Bayes | 0.6522 | 0.9573 | 0.6641 | 0.6512 | 0.6479 | 0.6391 |
-| **Support Vector Machine** | **0.9748** | **0.9995** | **0.9748** | **0.9746** | **0.9746** | **0.9737** |
+| Support Vector Machine | **0.9748** | **0.9995** | **0.9748** | **0.9746** | **0.9746** | **0.9737** |
 
-### 4.5 Observations on Model Performance
+All values are reported to four decimal places.
+
+### Observations on Model Performance
 
 | ML Model Name | Observation about Model Performance |
 |---|---|
-| **Logistic Regression** | Achieved 77.42% accuracy. It provides a useful linear classification baseline but has limitations in capturing complex nonlinear relationships between visually similar letter shapes. |
-| **Decision Tree** | Achieved 85.62% accuracy. It improves upon Logistic Regression by learning nonlinear decision rules, although its performance is lower than the distance-based and kernel-based classifiers. |
-| **K-Nearest Neighbors** | Achieved 95.00% accuracy. Its strong performance indicates that similar letter shapes tend to occupy nearby regions in the scaled feature space. |
-| **Gaussian Naive Bayes** | Achieved 65.22% accuracy, the lowest among the five classifiers. Its conditional independence assumption is less suitable for correlated letter-shape features. |
-| **Support Vector Machine** | Achieved the highest accuracy of 97.48% and AUC of 0.9995. The RBF kernel effectively captures complex nonlinear relationships, resulting in the best overall classification performance. |
+| Logistic Regression | Provides a useful linear baseline with an accuracy of 77.42%. Its performance is comparatively lower because the relationships between numerical letter-shape features and letter classes can be nonlinear. |
+| Decision Tree | Achieves an accuracy of 85.62%, improving upon Logistic Regression. It captures nonlinear decision boundaries through feature-based splits but does not perform as well as KNN and SVM on this dataset. |
+| K-Nearest Neighbors | Achieves 95.00% accuracy and performs strongly because similar letter shapes tend to have nearby representations in the scaled feature space. Its performance is substantially better than the linear and tree-based baseline models. |
+| Gaussian Naive Bayes | Achieves 65.22% accuracy, the lowest among the five models. Its conditional independence assumption is restrictive for correlated numerical features describing letter shapes. |
+| Support Vector Machine | Achieves the highest accuracy of 97.48% and the highest AUC of 0.9995. The RBF kernel effectively captures nonlinear class boundaries and provides the best overall classification performance among the evaluated models. |
 
-### 4.6 Overall Winner
+### Overall Winner
 
-**Support Vector Machine (SVM) is the overall best-performing classification model for the selected dataset.**
+**Support Vector Machine (SVM)** is the overall best-performing model for the UCI Letter Recognition dataset.
 
-It achieved the highest score across all six evaluation metrics:
+It achieves the highest value across all six evaluation metrics:
 
-| Metric | SVM Result |
-|---|---:|
-| Accuracy | 0.9748 |
-| AUC Score | 0.9995 |
-| Precision | 0.9748 |
-| Recall | 0.9746 |
-| F1 Score | 0.9746 |
-| MCC Score | 0.9737 |
-| Average Rank | 1.00 |
+- Accuracy: 0.9748
+- AUC: 0.9995
+- Precision: 0.9748
+- Recall: 0.9746
+- F1 Score: 0.9746
+- MCC: 0.9737
 
-The Streamlit application ranks the five models using all six evaluation metrics, with lower average rank indicating better overall performance.
+The SVM model demonstrates strong classification performance across all 26 letter classes and consistently outperforms the other four classifiers.
 
-SVM achieved an average rank of 1.00, ranking first across all six metrics.
-
-K-Nearest Neighbors achieved the second-best overall performance with 95.00% accuracy.
-
-Therefore, **Support Vector Machine is selected as the overall winner on the held-out test dataset**.
+The Streamlit application also calculates the average rank of each model across the six evaluation metrics. Support Vector Machine achieves an average rank of **1.00**, confirming its first-place ranking.
 
 ## 5. Saved Training Outputs
 
-Running `train_models.py` generates the following model artifacts and evaluation files:
+The `train_models.py` script trains the five classifiers and saves their trained model artifacts.
+
+The saved outputs include:
 
 ```text
 models/
@@ -157,31 +153,16 @@ metrics.csv
 test_data.csv
 ```
 
-The `.joblib` files contain the trained classification models.
+The `.joblib` files contain the trained classifiers. For Logistic Regression, K-Nearest Neighbors, and Support Vector Machine, the saved artifacts also contain the fitted feature scaler.
 
-For Logistic Regression, KNN, and SVM, the saved artifacts also contain their fitted feature-scaling pipelines.
-
-The `metadata.json` file contains information required to load and evaluate the models.
-
-The `metrics.csv` file stores the calculated model evaluation results.
-
-The `test_data.csv` file contains the held-out test dataset used for model evaluation.
+The saved models are loaded directly by the Streamlit application. The application does not retrain the classifiers when evaluating uploaded test data.
 
 ## 6. Project Structure
 
+The GitHub repository is organized as follows:
+
 ```text
 ml-a2-letter-recog/
-│
-├── .streamlit/
-│   └── config.toml
-│
-├── models/
-│   ├── decision_tree.joblib
-│   ├── gaussian_naive_bayes.joblib
-│   ├── k_nearest_neighbors.joblib
-│   ├── logistic_regression.joblib
-│   ├── support_vector_machine.joblib
-│   └── metadata.json
 │
 ├── .gitignore
 ├── README.md
@@ -191,202 +172,136 @@ ml-a2-letter-recog/
 ├── train_models.py
 ├── verify_project.py
 ├── metrics.csv
-└── test_data.csv
+├── test_data.csv
+│
+├── .streamlit/
+│   └── config.toml
+│
+└── models/
+    ├── decision_tree.joblib
+    ├── gaussian_naive_bayes.joblib
+    ├── k_nearest_neighbors.joblib
+    ├── logistic_regression.joblib
+    ├── support_vector_machine.joblib
+    └── metadata.json
 ```
 
-## 7. Local Setup and Execution
+## 7. Setup and Execution
 
-### 7.1 Prerequisites
+### Python Environment
 
-- Python
-- pip
-- Git
+The project dependencies are listed in `requirements.txt`.
 
-### 7.2 Clone the GitHub Repository
+The project was executed and verified in the BITS Virtual Lab using Python 3.12.7. Streamlit Community Cloud deployed the application using Python 3.12.16.
+
+### Create a Virtual Environment
 
 ```bash
-git clone https://github.com/MayankManish2026/ml-a2-letter-recog.git
-cd ml-a2-letter-recog
+python3 -m venv .venv
 ```
 
-### 7.3 Create a Virtual Environment
+Activate the environment on Linux:
 
-```powershell
-python -m venv .venv
+```bash
+source .venv/bin/activate
 ```
 
-### 7.4 Install Required Dependencies
+### Install Dependencies
 
-On Windows:
-
-```powershell
-.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+```bash
+pip install -r requirements.txt
 ```
 
-All application dependencies are specified in `requirements.txt`.
+### Train the Models
 
-### 7.5 Train the Classification Models
+To reproduce the training process:
 
-To regenerate the five trained classifiers and their evaluation outputs:
-
-```powershell
-.\.venv\Scripts\python.exe train_models.py
+```bash
+python train_models.py
 ```
 
-Training is optional when using the already saved model artifacts.
+This generates the saved model artifacts and evaluation results.
 
-### 7.6 Run the Streamlit Application
+### Run the Streamlit Application
 
-```powershell
-.\.venv\Scripts\python.exe -m streamlit run app.py
+```bash
+python -m streamlit run app.py
 ```
 
-The application opens in a web browser, typically at:
-
-http://localhost:8501
-
-## 8. Reproducibility Verification
+### Reproducibility Verification
 
 Run the verification script:
 
-```powershell
-.\.venv\Scripts\python.exe verify_project.py
+```bash
+python verify_project.py
 ```
 
-The verification script:
+The verification script loads each saved classifier and checks whether its predictions on the held-out test data reproduce the recorded evaluation metrics.
 
-- Loads all five saved trained classifiers.
-- Evaluates them using `test_data.csv`.
-- Recalculates the evaluation metrics.
-- Compares the results with `metrics.csv`.
-- Confirms reproducibility without retraining the models.
+The BITS Virtual Lab verification completed successfully:
 
-This ensures that the saved model artifacts reproduce the recorded evaluation results.
+```text
+PASS - Logistic Regression
+PASS - Decision Tree
+PASS - K-Nearest Neighbors
+PASS - Gaussian Naive Bayes
+PASS - Support Vector Machine
 
-## 9. Python Environment
+All five saved models reproduce the recorded held-out metrics.
+No model was retrained.
+```
 
-The project has been tested locally using Python 3.14.
+This confirms that all five saved model artifacts reproduce the recorded results without retraining.
 
-Execution and validation in the BITS Virtual Lab environment using Python 3.12 are planned as part of the final assignment submission.
+## 8. Streamlit Web Application
 
-The application uses dependencies specified in `requirements.txt` to support reproducible installation.
+The interactive web application is developed using Streamlit.
 
-## 10. Streamlit Web Application
+**Live Application:**
 
-The project includes an interactive Streamlit web application implemented in `app.py`.
+https://letter-recognition-mayankmanish.streamlit.app/
 
-The application loads saved classification models and evaluates their predictions without retraining them.
+### Application Features
 
-### 10.1 Model Selection
+The application provides the following functionality:
 
-Users can select any of the five saved classifiers from the sidebar dropdown.
+1. **Dataset Evaluation:** Evaluates the included 4,000-row held-out test dataset.
+2. **CSV Upload:** Allows users to upload a labelled test CSV containing all 16 input features and the target column `letter`.
+3. **Model Selection:** Provides a dropdown to select any of the five saved classification models.
+4. **Evaluation Metrics:** Displays Accuracy, AUC, Precision, Recall, F1 Score, and MCC.
+5. **Confusion Matrix:** Displays the confusion matrix for the selected model.
+6. **Classification Report:** Displays class-wise precision, recall, F1 Score, and support.
+7. **Model Comparison:** Compares all five saved models using the same held-out test dataset and all six evaluation metrics.
+8. **Prediction Preview:** Displays the first 30 prediction records along with predicted letters and prediction confidence.
+9. **CSV Download:** Allows users to download all 4,000 prediction records as a CSV file.
 
-### 10.2 Dataset Selection and CSV Upload
+The application loads the previously saved trained models from the `models/` directory. It does not retrain or refit any model when a test CSV is uploaded.
 
-The application supports:
+## 9. Streamlit Community Cloud Deployment
 
-- Evaluation using the included 4,000-record held-out test dataset.
-- Uploading a labelled test CSV containing the `letter` target column and all 16 required numerical input features.
+The application is deployed on Streamlit Community Cloud using the public GitHub repository.
 
-Uploaded test data is used only for evaluation, not model training.
+**Deployment Configuration:**
 
-### 10.3 Individual Model Evaluation
+| Setting | Value |
+|---|---|
+| Repository | `MayankManish2026/ml-a2-letter-recog` |
+| Branch | `main` |
+| Main file | `app.py` |
+| Python version | 3.12 |
 
-For the selected model, the application displays:
+**Live Deployment URL:**
 
-- Accuracy
-- AUC Score (OvR macro)
-- Precision (macro)
-- Recall (macro)
-- F1 Score (macro)
-- Matthews Correlation Coefficient
+https://letter-recognition-mayankmanish.streamlit.app/
 
-### 10.4 Confusion Matrix
+The deployed application successfully installed its dependencies and started the Streamlit server.
 
-A confusion matrix visualizes actual versus predicted letter classes across all 26 categories (A–Z).
+## 10. Conclusion
 
-### 10.5 Classification Report
+This project implements and evaluates five machine learning classification algorithms on the UCI Letter Recognition dataset.
 
-The application displays class-wise:
+The comparison demonstrates the differences in classification performance between linear, tree-based, probabilistic, distance-based, and kernel-based approaches.
 
-- Precision
-- Recall
-- F1 Score
-- Support
+Among the five evaluated models, Support Vector Machine achieves the best overall performance, with an accuracy of 97.48% and an AUC score of 0.9995.
 
-It also displays overall accuracy, macro-average and weighted-average results.
-
-### 10.6 Test Data Prediction Preview
-
-The application displays the first 30 test records with:
-
-- Numerical input features
-- Actual letter
-- Predicted letter
-- Prediction confidence
-
-This allows users to inspect individual classification predictions.
-
-### 10.7 Prediction CSV Download
-
-Users can download the complete evaluation dataset with predicted letters and prediction confidence.
-
-For the included held-out test dataset, the CSV export contains all 4,000 records, while the on-screen preview displays only the first 30.
-
-### 10.8 All-Model Performance Comparison
-
-The application compares all five trained classification models using the same held-out test dataset.
-
-The comparison table displays:
-
-- Accuracy
-- AUC Score
-- Precision
-- Recall
-- F1 Score
-- MCC Score
-- Average Rank
-
-The highest metric values and the lowest average rank are highlighted to make model comparison easier.
-
-### 10.9 Overall Best-Performing Model
-
-The application automatically identifies the best-performing model based on its average ranking across all six evaluation metrics.
-
-For the included held-out dataset, **Support Vector Machine (SVM)** is identified as the winner, with:
-
-- Accuracy: 0.9748
-- Average Rank: 1.00
-
-## 11. Streamlit Community Cloud Deployment
-
-The application is intended to be deployed using Streamlit Community Cloud.
-
-**GitHub Repository:**
-
-https://github.com/MayankManish2026/ml-a2-letter-recog
-
-**Application Entry Point:** `app.py`
-
-**Deployment Branch:** `main`
-
-**Live Streamlit Application URL:** To be updated after successful deployment.
-
-The deployed application will use the same saved models, source code, and dependencies as the GitHub repository.
-
-## 12. Conclusion
-
-This project demonstrates an end-to-end machine learning classification workflow, including:
-
-- Dataset preparation and preprocessing
-- Training five supervised classification models
-- Evaluating six performance metrics
-- Comparing model performance on held-out test data
-- Saving and reusing trained model artifacts
-- Verifying reproducibility
-- Developing an interactive Streamlit application
-- Preparing the application for cloud deployment
-
-Among the five evaluated classifiers, **Support Vector Machine achieved the best overall performance**, with an accuracy of 97.48% and the highest score across all six evaluation metrics.
-
-The Streamlit application provides an interactive interface for evaluating individual models, inspecting predictions, and comparing all five classifiers using consistent evaluation criteria.
+The project also demonstrates an end-to-end machine learning workflow, including dataset preparation, model training, performance evaluation, model persistence, reproducibility verification, interactive application development, GitHub version control, and deployment on Streamlit Community Cloud.
